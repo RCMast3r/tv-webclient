@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>nebtv remote</title>
+<style>
+  :root{
+    --bg:#080a0f;
+    --bg2:#0d1119;
+    --panel:rgba(255,255,255,.045);
+    --panel2:rgba(255,255,255,.075);
+    --line:rgba(255,255,255,.10);
+    --line2:rgba(255,255,255,.18);
+    --ink:#eef1f6;
+    --muted:#8c94a6;
+    --faint:#5b6274;
+    --accent:#5eead4;
+    --accent2:#7c9cff;
+    --danger:#ff6b7d;
+    --warn:#ffcf6b;
+    --ok:#5eead4;
+    --r:18px;
+    --tap:48px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 700px at 12% -10%, rgba(94,234,212,.10), transparent 60%),
+      radial-gradient(900px 600px at 100% 0%, rgba(124,156,255,.12), transparent 55%),
+      linear-gradient(180deg,var(--bg2),var(--bg) 55%);
+    color:var(--ink);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
+    overflow-x:hidden;
+    min-height:100dvh;
+  }
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer;touch-action:manipulation}
+  .wrap{
+    max-width:1180px;margin:0 auto;
+    padding:calc(14px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  /* ---------- header ---------- */
+  header{
+    display:flex;align-items:center;gap:12px;
+    padding:6px 2px 16px;
+  }
+  .brand{display:flex;align-items:baseline;gap:8px;font-weight:750;letter-spacing:-.02em;font-size:21px}
+  .brand .dotmark{color:var(--accent)}
+  .brand small{font-weight:550;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .grow{flex:1}
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;
+    border:1px solid var(--line);background:var(--panel);
+    padding:8px 12px;border-radius:999px;font-size:12.5px;color:var(--muted);
+    white-space:nowrap;
+  }
+  .pill .led{width:8px;height:8px;border-radius:50%;background:var(--faint);box-shadow:0 0 0 3px rgba(255,255,255,.03)}
+  .pill.online .led{background:var(--ok);box-shadow:0 0 12px rgba(94,234,212,.75)}
+  .pill.pairing .led{background:var(--warn);animation:pulse 1.3s infinite}
+  .pill.connecting .led{background:var(--accent2);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .iconbtn{
+    border:1px solid var(--line);background:var(--panel);
+    width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+    font-size:17px;color:var(--muted);
+  }
+  .iconbtn:hover{border-color:var(--line2);color:var(--ink)}
+
+  /* ---------- layout ---------- */
+  main{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:18px;align-items:start}
+  @media(max-width:900px){
+    main{grid-template-columns:1fr;gap:14px}
+    .remoteCard{order:1}
+    .appsCard{order:2}
+  }
+  .card{
+    background:linear-gradient(180deg,var(--panel),rgba(255,255,255,.018));
+    border:1px solid var(--line);border-radius:var(--r);
+    padding:16px;
+    box-shadow:0 24px 60px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .cardHead{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+  .cardHead h2{font-size:13px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:650}
+  .cardHead .grow{flex:1}
+  .mini{
+    border:1px solid var(--line);background:transparent;color:var(--muted);
+    border-radius:10px;padding:6px 10px;font-size:12px;
+  }
+  .mini:hover{color:var(--ink);border-color:var(--line2)}
+  .mini.accent{color:var(--accent);border-color:rgba(94,234,212,.35);background:rgba(94,234,212,.06)}
+
+  /* ---------- apps ---------- */
+  .quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+  @media(max-width:520px){
+    .quick{grid-template-columns:1fr 1fr}
+    .quick .home{grid-column:1 / -1;min-height:70px;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px}
+    .quick .home .ico{margin:0}
+  }
+  .appTile{
+    position:relative;overflow:hidden;
+    min-height:92px;border-radius:16px;border:1px solid var(--line);
+    background:
+      radial-gradient(220px 120px at 100% 0%, rgba(124,156,255,.22), transparent 70%),
+      var(--panel2);
+    display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;
+    gap:2px;padding:14px;text-align:left;
+  }
+  .appTile:hover{border-color:var(--line2);transform:translateY(-1px)}
+  .appTile:active{transform:translateY(0)}
+  .appTile .ico{font-size:26px;line-height:1;margin-bottom:auto;opacity:.95}
+  .appTile b{font-size:16px;letter-spacing:-.01em}
+  .appTile span{font-size:11.5px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .appTile.yt{background:radial-gradient(240px 130px at 100% 0%, rgba(255,70,85,.30), transparent 70%),var(--panel2)}
+  .appTile.jf{background:radial-gradient(240px 130px at 100% 0%, rgba(124,156,255,.34), transparent 70%),var(--panel2)}
+  .appTile.home{background:radial-gradient(240px 130px at 100% 0%, rgba(94,234,212,.34), transparent 70%),var(--panel2)}
+  .appTile .badge{
+    position:absolute;top:10px;right:10px;font-size:10px;padding:3px 7px;border-radius:999px;
+    background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);color:var(--muted);
+  }
+  .appGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;max-height:260px;overflow:auto;padding-right:4px}
+  .appGrid::-webkit-scrollbar{width:8px}
+  .appGrid::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px}
+  .appSmall{
+    border:1px solid var(--line);background:rgba(255,255,255,.028);border-radius:12px;
+    padding:10px 11px;text-align:left;min-height:52px;
+  }
+  .appSmall:hover{background:rgba(255,255,255,.06);border-color:var(--line2)}
+  .appSmall b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .appSmall span{display:block;font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+  .search{
+    width:100%;border:1px solid var(--line);background:rgba(0,0,0,.18);
+    border-radius:11px;padding:9px 11px;font-size:13px;outline:none;margin-bottom:10px;
+  }
+  .search:focus{border-color:rgba(94,234,212,.45)}
+  .urlRow{display:flex;gap:8px;margin-top:12px}
+  .urlRow input{flex:1;min-width:0;border:1px solid var(--line);background:rgba(0,0,0,.18);border-radius:11px;padding:9px 11px;font-size:13px;outline:none}
+  .urlRow button{border:1px solid var(--line);background:var(--panel2);border-radius:11px;padding:0 14px;font-size:12.5px}
+  .hint{color:var(--faint);font-size:11.5px;line-height:1.5;margin:10px 0 0}
+
+  /* ---------- remote ---------- */
+  .kbdRow{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .toggleChip{
+    display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);
+    background:rgba(0,0,0,.14);border-radius:999px;padding:7px 12px;font-size:12.5px;color:var(--muted);
+  }
+  .toggleChip .sw{width:30px;height:18px;border-radius:999px;background:rgba(255,255,255,.12);position:relative;transition:.18s}
+  .toggleChip .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#cfd6e4;transition:.18s}
+  .toggleChip.on{color:var(--ink);border-color:rgba(94,234,212,.42);background:rgba(94,234,212,.08)}
+  .toggleChip.on .sw{background:rgba(94,234,212,.55)}
+  .toggleChip.on .sw::after{left:14px;background:#062b27}
+  .toggleChip:active{transform:scale(.985)}
+
+  .dpadWrap{display:flex;gap:14px;align-items:center;margin:2px 0 14px}
+  .dpad{
+    --s:56px;
+    display:grid;grid-template-columns:repeat(3,var(--s));grid-template-rows:repeat(3,var(--s));
+    gap:6px;flex:0 0 auto;
+  }
+  .dpad button{
+    border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.028));
+    border-radius:14px;display:grid;place-items:center;font-size:19px;color:var(--ink);
+    -webkit-user-select:none;user-select:none;
+  }
+  .dpad button:active{background:rgba(94,234,212,.16);border-color:rgba(94,234,212,.5)}
+  .dpad .ok{background:radial-gradient(circle at 50% 35%,rgba(94,234,212,.24),rgba(255,255,255,.05));border-color:rgba(94,234,212,.32);font-size:13px;font-weight:700;letter-spacing:.04em}
+  .dpad .blank{visibility:hidden}
+  .sideKeys{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1}
+  .sideKeys button{
+    min-height:44px;border:1px solid var(--line);background:rgba(255,255,255,.035);
+    border-radius:12px;font-size:12px;color:var(--ink);display:flex;flex-direction:column;gap:1px;align-items:center;justify-content:center;
+  }
+  .sideKeys button small{font-size:9.5px;color:var(--faint);letter-spacing:.06em;text-transform:uppercase}
+  .sideKeys button:active{background:rgba(124,156,255,.14);border-color:rgba(124,156,255,.4)}
+
+  .btnRow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+  .btnRow.three{grid-template-columns:repeat(3,1fr)}
+  .rbtn{
+    min-height:46px;border:1px solid var(--line);background:rgba(255,255,255,.032);
+    border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    font-size:12px;color:var(--ink);-webkit-user-select:none;user-select:none;
+  }
+  .rbtn small{font-size:9px;color:var(--faint);letter-spacing:.06em;text-transform:uppercase}
+  .rbtn:active{background:rgba(94,234,212,.14);border-color:rgba(94,234,212,.42)}
+  .rbtn.warn:active{background:rgba(255,107,125,.15);border-color:rgba(255,107,125,.5)}
+  .rbtn.hold{position:relative;overflow:hidden}
+  .rbtn.hold .fill{position:absolute;inset:auto 0 0 0;height:0;background:rgba(255,107,125,.22);transition:height .1s linear;pointer-events:none}
+
+  .colors{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:2px 0 12px}
+  .cdot{height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.16);font-size:0}
+  .cdot.red{background:#e04352}.cdot.green{background:#3fbf72}.cdot.yellow{background:#e3b53c}.cdot.blue{background:#4b7fe0}
+  .cdot:active{filter:brightness(1.35)}
+
+  /* ---------- overlays ---------- */
+  .scrim{
+    position:fixed;inset:0;background:rgba(4,6,10,.72);backdrop-filter:blur(8px);
+    display:none;align-items:center;justify-content:center;padding:20px;z-index:40;
+  }
+  .scrim.show{display:flex}
+  .modal{
+    width:min(520px,100%);max-height:calc(100dvh - 40px);overflow:auto;
+    background:linear-gradient(180deg,#141926,#0c1018);
+    border:1px solid var(--line2);border-radius:22px;padding:20px;
+    box-shadow:0 40px 100px rgba(0,0,0,.6);
+  }
+  .modal h2{margin:0 0 6px;font-size:20px;letter-spacing:-.02em}
+  .modal p{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.55}
+  .modal .bigIcon{font-size:32px;margin-bottom:6px}
+  .steps{margin:10px 0 16px;padding:0;list-style:none;counter-reset:s}
+  .steps li{position:relative;padding:8px 0 8px 34px;color:var(--muted);font-size:13px;border-top:1px solid rgba(255,255,255,.06)}
+  .steps li:first-child{border-top:0}
+  .steps li::before{
+    counter-increment:s;content:counter(s);position:absolute;left:0;top:7px;
+    width:22px;height:22px;border-radius:50%;background:rgba(94,234,212,.14);color:var(--accent);
+    display:grid;place-items:center;font-size:11px;font-weight:700;border:1px solid rgba(94,234,212,.3);
+  }
+  .modalActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .btn{
+    min-height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(255,255,255,.04);font-size:13px;
+  }
+  .btn:hover{border-color:var(--line2)}
+  .btn.primary{background:linear-gradient(180deg,rgba(94,234,212,.22),rgba(94,234,212,.12));border-color:rgba(94,234,212,.45);color:#eafffb;font-weight:650}
+  .btn.danger{color:#ffd7dc;border-color:rgba(255,107,125,.35);background:rgba(255,107,125,.08)}
+  .btn:active{transform:translateY(1px)}
+  .spinner{
+    width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.15);
+    border-top-color:var(--accent);animation:spin .8s linear infinite;display:inline-block;vertical-align:-3px;margin-right:8px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+  .kv label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;letter-spacing:.04em}
+  .kv input{
+    width:100%;border:1px solid var(--line);background:rgba(0,0,0,.22);border-radius:10px;
+    padding:9px 10px;font-size:13px;outline:none;
+  }
+  .kv input:focus{border-color:rgba(94,234,212,.45)}
+  .settingRow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.06);font-size:13px}
+  .settingRow .grow{flex:1}
+  .settingRow select{border:1px solid var(--line);background:#131824;border-radius:9px;padding:7px 9px;font-size:12px}
+  .settingRow input[type=range]{width:130px;accent-color:var(--accent)}
+  .logList{
+    margin-top:12px;max-height:200px;overflow:auto;background:#070a10;border:1px solid var(--line);
+    border-radius:11px;padding:8px;font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#9aa4b8;
+  }
+  .logList div{white-space:pre-wrap;word-break:break-word;border-bottom:1px solid rgba(255,255,255,.04);padding:2px 0}
+  .logList .tx{color:#8fe8d8}.logList .rx{color:#a9b8ff}.logList .er{color:#ff9aa7}
+  #banner{
+    display:none;margin:0 0 14px;padding:10px 12px;border-radius:12px;font-size:12.5px;
+    border:1px solid rgba(255,207,107,.35);background:rgba(255,207,107,.08);color:#ffe2a1;
+  }
+  #banner.show{display:block}
+  #toast{
+    position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,20px);
+    background:rgba(15,20,30,.96);border:1px solid var(--line2);color:var(--ink);
+    padding:10px 16px;border-radius:999px;font-size:12.5px;z-index:60;
+    opacity:0;pointer-events:none;transition:.2s;max-width:calc(100vw - 32px);text-align:center;
+    box-shadow:0 18px 50px rgba(0,0,0,.5);
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #toast.bad{border-color:rgba(255,107,125,.45)}
+  kbd{
+    font:11px ui-monospace,Menlo,Consolas,monospace;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:6px;padding:1px 5px;color:#dfe5f1;
+  }
+  .kbdHelp{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;font-size:12.5px;color:var(--muted)}
+  .kbdHelp b{color:var(--ink);font-weight:600}
+  .offlineOnly,.onlineOnly{display:none}
+  body.online .onlineOnly{display:revert}
+  body.online .offlineOnly{display:none}
+  body:not(.online) .offlineOnly{display:revert}
+  .foot{color:var(--faint);font-size:11px;text-align:center;margin-top:18px}
+  .foot a{color:var(--muted)}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span>nebtv</span><span class="dotmark">•</span><small>remote</small></div>
+    <div class="grow"></div>
+    <button class="pill" id="connPill" title="Connection status">
+      <span class="led"></span><span id="connText">offline</span>
+    </button>
+    <button class="mini accent offlineOnly" id="btnConnect" style="min-height:40px">Connect</button>
+    <button class="iconbtn" id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
+  </header>
+
+  <div id="banner"></div>
+
+  <main>
+    <!-- ================= apps ================= -->
+    <section class="card appsCard">
+      <div class="cardHead">
+        <h2>Apps</h2><div class="grow"></div>
+        <button class="mini" id="btnRefreshApps">Refresh</button>
+      </div>
+
+      <div class="quick">
+        <button class="appTile yt" id="tileYouTube">
+          <span class="badge" id="ytBadge">YT</span>
+          <span class="ico">▶</span>
+          <b>YouTube</b>
+          <span id="ytSub">launch on TV</span>
+        </button>
+        <button class="appTile jf" id="tileJellyfin">
+          <span class="badge" id="jfBadge">JF</span>
+          <span class="ico">🎞</span>
+          <b>Jellyfin</b>
+          <span id="jfSub">launch on TV</span>
+        </button>
+        <button class="appTile home" id="tileHome">
+          <span class="badge" id="homeBadge">dash</span>
+          <span class="ico">⌂</span>
+          <b>Dashboard</b>
+          <span id="homeSub">klyq</span>
+        </button>
+      </div>
+
+      <input class="search" id="appSearch" type="search" placeholder="Search installed apps…" autocomplete="off" spellcheck="false">
+      <div class="appGrid" id="appGrid"></div>
+
+      <div class="urlRow">
+        <input id="urlInput" type="url" placeholder="Open a URL in the TV browser (optional)" autocomplete="off" spellcheck="false">
+        <button id="btnOpenUrl">Open</button>
+      </div>
+      <p class="hint">Apps are read from the TV with <code>ed.installedApp.get</code>. YouTube and Jellyfin are resolved by name, with known IDs as fallback.</p>
+    </section>
+
+    <!-- ================= remote ================= -->
+    <section class="card remoteCard">
+      <div class="cardHead">
+        <h2>Remote</h2><div class="grow"></div>
+        <button class="mini" id="btnHelp">Keys</button>
+      </div>
+
+      <div class="kbdRow">
+        <button class="toggleChip" id="btnKeyboard">
+          <span class="sw"></span>
+          <span>Keyboard capture</span>
+        </button>
+        <button class="toggleChip" id="btnTextMode">
+          <span class="sw"></span>
+          <span>Text input</span>
+        </button>
+      </div>
+
+      <div class="dpadWrap">
+        <div class="dpad" aria-label="Directional pad">
+          <button class="blank" tabindex="-1" aria-hidden="true"></button>
+          <button data-key="KEY_UP" data-repeat="1" aria-label="Up">▲</button>
+          <button class="blank" tabindex="-1" aria-hidden="true"></button>
+          <button data-key="KEY_LEFT" data-repeat="1" aria-label="Left">◀</button>
+          <button data-key="KEY_ENTER" class="ok" aria-label="OK">OK</button>
+          <button data-key="KEY_RIGHT" data-repeat="1" aria-label="Right">▶</button>
+          <button class="blank" tabindex="-1" aria-hidden="true"></button>
+          <button data-key="KEY_DOWN" data-repeat="1" aria-label="Down">▼</button>
+          <button class="blank" tabindex="-1" aria-hidden="true"></button>
+        </div>
+        <div class="sideKeys">
+          <button data-key="KEY_VOLUP" data-repeat="1">Vol <b>+</b><small>volume up</small></button>
+          <button data-key="KEY_VOLDOWN" data-repeat="1">Vol <b>−</b><small>volume down</small></button>
+          <button data-key="KEY_CHUP" data-repeat="1">CH <b>+</b><small>channel up</small></button>
+          <button data-key="KEY_CHDOWN" data-repeat="1">CH <b>−</b><small>channel down</small></button>
+        </div>
+      </div>
+
+      <div class="btnRow three">
+        <button class="rbtn" data-key="KEY_RETURN">↩ <small>Back</small></button>
+        <button class="rbtn" data-key="KEY_HOME">⌂ <small>Home</small></button>
+        <button class="rbtn" data-key="KEY_MENU">☰ <small>Menu</small></button>
+      </div>
+      <div class="btnRow">
+        <button class="rbtn" data-key="KEY_PLAY">⏯ <small>Play</small></button>
+        <button class="rbtn" data-key="KEY_MUTE">🔇 <small>Mute</small></button>
+        <button class="rbtn" data-key="KEY_GUIDE">▤ <small>Guide</small></button>
+        <button class="rbtn" data-key="KEY_INFO">ⓘ <small>Info</small></button>
+      </div>
+      <div class="btnRow three">
+        <button class="rbtn" data-key="KEY_SOURCE">⤢ <small>Source</small></button>
+        <button class="rbtn" data-key="KEY_EXIT">⏏ <small>Exit</small></button>
+        <button class="rbtn warn hold" id="btnPower">⏻ <small>Hold power</small><span class="fill"></span></button>
+      </div>
+
+      <div class="colors">
+        <button class="cdot red"   data-key="KEY_RED"    aria-label="Red"></button>
+        <button class="cdot green" data-key="KEY_GREEN"  aria-label="Green"></button>
+        <button class="cdot yellow"data-key="KEY_YELLOW" aria-label="Yellow"></button>
+        <button class="cdot blue"  data-key="KEY_BLUE"   aria-label="Blue"></button>
+      </div>
+
+    </section>
+  </main>
+
+  <div class="foot">single-file client · on-TV backend or Samsung API v2</div>
+</div>
+
+<!-- ================= pairing / connect ================= -->
+<div class="scrim" id="pairScrim">
+  <div class="modal">
+    <div class="bigIcon">📺</div>
+    <h2 id="pairTitle">Pair with your TV</h2>
+    <p id="pairText"><span class="spinner"></span>Connecting to <b id="pairHost">samsung.lan</b>…</p>
+    <ol class="steps" id="pairSteps">
+      <li>Make sure the TV is on and on the same network.</li>
+      <li>When the TV shows a <b>Smart Device</b> / <b>Allow</b> prompt, select <b>Allow</b>.</li>
+      <li>No prompt? Turn on <b>Settings → General → External Device Manager → Device Connection Manager → Access Notification</b> on the TV.</li>
+      <li>This page connects automatically and saves the token.</li>
+    </ol>
+    <div class="modalActions">
+      <button class="btn primary" id="btnPairRetry">Retry now</button>
+      <button class="btn" id="btnPairForget">Forget token &amp; retry</button>
+      <button class="btn" id="btnPairClose">Stay offline</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= settings ================= -->
+<div class="scrim" id="settingsScrim">
+  <div class="modal">
+    <h2>Settings</h2>
+    <p>Connection is direct from this browser to the TV. Nothing is proxied.</p>
+    <div class="kv">
+      <div>
+        <label for="inHost">TV hostname or IP</label>
+        <input id="inHost" value="samsung.lan" autocomplete="off" spellcheck="false">
+      </div>
+      <div>
+        <label for="inPort">Port</label>
+        <input id="inPort" value="8001" inputmode="numeric" autocomplete="off">
+      </div>
+    </div>
+    <div class="kv">
+      <div>
+        <label for="inName">Device name shown on TV</label>
+        <input id="inName" value="[Mobile] nebtv-web" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="settingRow">
+      <span class="grow">Control backend</span>
+      <select id="inMode">
+        <option value="backend">nebtv backend on TV (port 8099)</option>
+        <option value="samsung">Samsung API v2 WebSocket</option>
+      </select>
+    </div>
+    <div class="kv" style="grid-template-columns:1fr">
+      <div>
+        <label for="inBackend">Backend URL</label>
+        <input id="inBackend" placeholder="http://samsung.lan:8099" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="settingRow">
+      <span class="grow">Saved token</span>
+      <span id="tokenState" style="color:var(--faint);font-size:12px">none</span>
+    </div>
+    <div class="kv" style="grid-template-columns:1fr">
+      <div>
+        <label for="inToken">Pairing token (optional, paste from a working client)</label>
+        <input id="inToken" type="password" placeholder="paste token" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <p class="hint">Keep the <code>[Mobile]</code>, <code>[Phone]</code>, <code>[PC]</code> or <code>[Tablet]</code> prefix. The TV uses it to classify the client during ACL pairing.</p>
+    <div class="modalActions">
+      <button class="btn primary" id="btnSaveSettings">Save</button>
+      <button class="btn" id="btnReconnect">Reconnect</button>
+      <button class="btn danger" id="btnForget">Forget token</button>
+    </div>
+    <div class="modalActions">
+      <button class="btn" id="btnShowLog">Show log</button>
+      <button class="btn" id="btnClearLog">Clear log</button>
+      <button class="btn" id="btnCloseSettings">Close</button>
+    </div>
+    <div class="logList" id="logList" hidden></div>
+  </div>
+</div>
+
+<!-- ================= keyboard help ================= -->
+<div class="scrim" id="helpScrim">
+  <div class="modal">
+    <h2>Keyboard capture</h2>
+    <p>Turn on <b>Keyboard capture</b>, then use these keys. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> releases capture.</p>
+    <div class="kbdHelp">
+      <b>↑ ↓ ← →</b><span>navigate</span>
+      <b>Enter</b><span>OK / select</span>
+      <b>Backspace</b><span>delete text</span>
+      <b>Esc</b><span>back</span>
+      <b>Home</b><span>Home</span>
+      <b>Page Up / Page Down</b><span>channel up / down</span>
+      <b>+ / −</b><span>volume up / down</span>
+      <b>M</b><span>mute</span>
+      <b>Space</b><span>type a space</span>
+      <b>0–9</b><span>type digits</span>
+      <b>I</b><span>info</span>
+      <b>S</b><span>source</span>
+      <b>G</b><span>guide</span>
+    </div>
+    <p style="margin-top:12px">Letters, digits and punctuation are typed into the focused TV text field. Use the on-screen D-pad or arrow keys for navigation; the on-screen buttons still send media/volume keys.</p>
+    <div class="modalActions"><button class="btn primary" id="btnCloseHelp">Got it</button></div>
+  </div>
+</div>
+
+<!-- ================= text input ================= -->
+<div class="scrim" id="textScrim">
+  <div class="modal">
+    <h2>Send text to TV</h2>
+    <p>Focus the TV's search or text field first, then send. The TV receives the string via the remote-control channel.</p>
+    <input class="search" id="textInput" placeholder="Type here…" autocomplete="off" autocapitalize="sentences" spellcheck="false">
+    <div class="modalActions">
+      <button class="btn primary" id="btnSendText">Send text</button>
+      <button class="btn" id="btnCloseText">Close</button>
+    </div>
+    <p class="hint">Tip: turn on <b>Keyboard capture</b> afterwards to use arrows and Enter in the app.</p>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     Configuration & state
+     ============================================================ */
+  var LS = {
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  var CFG = {
+    host: LS.get("tv.host", "samsung.lan"),
+    port: parseInt(LS.get("tv.port", "8001"), 10) || 8001,
+    name: LS.get("tv.name", "[Mobile] nebtv-web"),
+    token: LS.get("tv.token", ""),
+    space: LS.get("tv.space", "1920x1080"),
+    mode: LS.get("tv.mode", "backend"),
+    backend: LS.get("tv.backend", ""),
+  };
+
+  function backendBase() {
+    var b = (CFG.backend || "").trim().replace(/\/+$/, "");
+    if (!b) b = "http://" + CFG.host + ":8099";
+    return b;
+  }
+  function isBackend() { return CFG.mode !== "samsung"; }
+
+  var APP_IDS = {
+    youtube: [
+      { id: "9Ur5IzDKqV.TizenYouTube", action: "NATIVE_LAUNCH" },
+      { id: "111299001912", action: "DEEP_LINK" }
+    ],
+    jellyfin: [
+      { id: "rTn6ClEurC.Jellyfin", action: "NATIVE_LAUNCH" }
+    ]
+  };
+
+  var KEYMAP = {
+    ArrowUp: "KEY_UP", ArrowDown: "KEY_DOWN", ArrowLeft: "KEY_LEFT", ArrowRight: "KEY_RIGHT",
+    Enter: "KEY_ENTER", Backspace: "KEY_BACKSPACE", Escape: "KEY_RETURN",
+    Home: "KEY_HOME", PageUp: "KEY_CHUP", PageDown: "KEY_CHDOWN",
+    "+": "KEY_VOLUP", "=": "KEY_VOLUP", "-": "KEY_VOLDOWN", "_": "KEY_VOLDOWN",
+    m: "KEY_MUTE", M: "KEY_MUTE",
+    i: "KEY_INFO", I: "KEY_INFO", s: "KEY_SOURCE", S: "KEY_SOURCE",
+    g: "KEY_GUIDE", G: "KEY_GUIDE",
+    "0": "KEY_0", "1": "KEY_1", "2": "KEY_2", "3": "KEY_3", "4": "KEY_4",
+    "5": "KEY_5", "6": "KEY_6", "7": "KEY_7", "8": "KEY_8", "9": "KEY_9"
+  };
+
+  var state = {
+    ws: null,
+    want: false,
+    connected: false,
+    paired: false,
+    unauthorized: false,
+    attempts: 0,
+    reconnectTimer: null,
+    pairTimer: null,
+    keyQueue: [],
+    keyTimer: null,
+    keyGap: 45,
+    apps: [],
+    keyboard: false,
+    textMode: false,
+    appListTimer: null
+  };
+
+  /* ============================================================
+     Tiny helpers
+     ============================================================ */
+  function $(id) { return document.getElementById(id); }
+  function clamp(n, a, b) { return n < a ? a : n > b ? b : n; }
+  function toB64(str) {
+    var bytes = new TextEncoder().encode(str), bin = "", i;
+    for (i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+    });
+  }
+
+  function splitHostPort(value) {
+    var v = String(value || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+    var m = v.match(/^([^:]+):(\d+)$/);
+    if (m) return { host: m[1], port: parseInt(m[2], 10) };
+    return { host: v, port: 0 };
+  }
+
+  // remote-server classifies a client by this prefix. Without it, the ACL
+  // pairing path treats the device as unknown and closes the socket.
+  function ensureDeviceName() {
+    if (!/^\[(Mobile|Phone|PC|Tablet)\]/.test(CFG.name)) {
+      CFG.name = "[Mobile] " + CFG.name;
+      LS.set("tv.name", CFG.name);
+    }
+    return CFG.name;
+  }
+
+  var toastTimer = null;
+  function toast(msg, bad) {
+    var el = $("toast");
+    el.textContent = msg;
+    el.className = "show" + (bad ? " bad" : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.className = ""; }, 2600);
+  }
+
+  var wakeLock = null;
+  function keepAwake() {
+    try {
+      if (!navigator.wakeLock || wakeLock) return;
+      navigator.wakeLock.request("screen").then(function (lock) {
+        wakeLock = lock;
+        lock.addEventListener("release", function () { wakeLock = null; });
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  function releaseWake() {
+    if (!wakeLock) return;
+    try { wakeLock.release(); } catch (e) {}
+    wakeLock = null;
+  }
+
+  var logEl, logCount = 0;
+  function log(kind, text) {
+    if (!logEl) logEl = $("logList");
+    if (!logEl) return;
+    if (logCount > 250) { logEl.removeChild(logEl.firstChild); } else { logCount++; }
+    var row = document.createElement("div");
+    row.className = kind;
+    row.textContent = new Date().toLocaleTimeString() + "  " + text;
+    logEl.appendChild(row);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  /* ============================================================
+     Connection
+     ============================================================ */
+  function wsScheme() { return CFG.port === 8002 ? "wss" : "ws"; }
+
+  function wsUrl() {
+    var q = "name=" + encodeURIComponent(toB64(ensureDeviceName())) +
+      "&description=" + encodeURIComponent(toB64("nebtv web remote"));
+    // A token captured by another client can be pasted in Settings. It is
+    // sent on both transports; 8002 is the TLS channel, 8001 the plain one.
+    if (CFG.token) q += "&token=" + encodeURIComponent(CFG.token);
+    return wsScheme() + "://" + CFG.host + ":" + CFG.port +
+      "/api/v2/channels/samsung.remote.control?" + q;
+  }
+
+  function setStatus(kind, text) {
+    var pill = $("connPill");
+    pill.className = "pill " + kind;
+    $("connText").textContent = text;
+  }
+
+  function updateOnline() {
+    document.body.classList.toggle("online", state.connected);
+    $("tokenState").textContent = CFG.token ? "saved (" + CFG.token.length + " chars)" : "none";
+  }
+
+  function showPair(show) {
+    $("pairScrim").classList.toggle("show", !!show);
+    if (!show) return;
+    if (state.unauthorized) {
+      $("pairText").innerHTML = "<b>Accept the prompt on your TV.</b> Look for “Smart Device” or the device name <b>" +
+        esc(CFG.name) + "</b>.";
+    } else {
+      $("pairText").innerHTML = '<span class="spinner"></span>Connecting to <b>' + esc(CFG.host) + "</b>…";
+    }
+  }
+
+  function connect(manual) {
+    if (isBackend()) { connectBackend(manual); return; }
+    if (manual) {
+      state.attempts = 0;
+      state.unauthorized = false;
+    }
+    state.want = true;
+    clearTimeout(state.reconnectTimer);
+    clearTimeout(state.appListTimer);
+
+    if (state.ws) {
+      try { state.ws.onclose = null; state.ws.close(); } catch (e) {}
+      state.ws = null;
+    }
+
+    setStatus("connecting", "connecting…");
+    if (!CFG.token || state.unauthorized) showPair(true);
+    log("", "connect → " + wsScheme() + "://" + CFG.host + ":" + CFG.port + "/api/v2/channels/samsung.remote.control");
+
+    var ws;
+    try {
+      ws = new WebSocket(wsUrl());
+    } catch (e) {
+      log("er", "WebSocket create failed: " + e.message);
+      setStatus("", "offline");
+      scheduleReconnect();
+      return;
+    }
+    state.ws = ws;
+
+    ws.onopen = function () {
+      log("", "socket open; waiting for TV");
+      setStatus("connecting", "waiting for TV…");
+      if (!state.unauthorized) showPair(true);
+    };
+
+    ws.onmessage = function (ev) {
+      var msg;
+      try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      onMessage(msg);
+    };
+
+    ws.onerror = function () {
+      log("er", "socket error");
+    };
+
+    ws.onclose = function (ev) {
+      var was = state.connected;
+      state.connected = false;
+      state.paired = false;
+      updateOnline();
+      log("", "socket closed (" + (ev && ev.code != null ? ev.code : "?") + ")");
+      if (was) toast("Disconnected from TV", true);
+      if (state.want) scheduleReconnect();
+    };
+  }
+
+  function connectBackend(manual) {
+    state.want = true;
+    clearTimeout(state.reconnectTimer);
+    setStatus("connecting", "backend…");
+    if (manual) showPair(false);
+    log("", "backend → " + backendBase() + "/api/status");
+    backendGet("/api/status").then(function (d) {
+      if (!d || !d.ok) throw new Error("backend not ok");
+      state.connected = true;
+      state.paired = true;
+      state.unauthorized = false;
+      state.attempts = 0;
+      setStatus("online", CFG.host + " · backend");
+      showPair(false);
+      updateOnline();
+      log("", "backend v" + (d.version || "?") + " connected");
+      toast("Backend connected");
+      keepAwake();
+      requestApps();
+    }).catch(function (e) {
+      state.connected = false;
+      updateOnline();
+      setStatus("", "backend offline");
+      log("er", "backend unreachable: " + e.message);
+      if (manual) toast("Cannot reach nebtv backend at " + backendBase(), true);
+      if (state.want) {
+        clearTimeout(state.reconnectTimer);
+        state.reconnectTimer = setTimeout(function () { if (state.want && !state.connected) connectBackend(false); }, 5000);
+      }
+    });
+  }
+
+  function scheduleReconnect() {
+    if (!state.want) return;
+    clearTimeout(state.reconnectTimer);
+    state.attempts++;
+    // Repeated unauthorized sockets can wedge msf-server on this firmware.
+    // Give the owner time to accept, then stop and require a manual Retry.
+    if (state.unauthorized && state.attempts > 3) {
+      state.want = false;
+      setStatus("pairing", "waiting for Allow…");
+      showPair(true);
+      $("pairText").innerHTML = "The TV closed the pairing socket. Accept the prompt on the TV, then press <b>Retry now</b>.";
+      return;
+    }
+    if (state.attempts > 120) {
+      state.want = false;
+      setStatus("", "offline");
+      showPair(true);
+      $("pairText").textContent = "Could not reach " + CFG.host + ". Check the TV is on and the hostname resolves.";
+      toast("TV unreachable", true);
+      return;
+    }
+    var delay = state.unauthorized
+      ? (state.attempts === 1 ? 8000 : 15000)
+      : Math.min(800 * state.attempts, 5000);
+    setStatus(state.unauthorized ? "pairing" : "connecting", state.unauthorized ? "waiting for Allow…" : "reconnecting…");
+    if (state.attempts === 3 && !state.unauthorized) toast("TV unreachable — check power and samsung.lan", true);
+    state.reconnectTimer = setTimeout(function () { connect(false); }, delay);
+  }
+
+  function onMessage(msg) {
+    var evt = "";
+    if (msg.event && msg.event !== "ms.channel.emit") evt = msg.event;
+    if (!evt && msg.params && msg.params.event) evt = msg.params.event;
+
+    if (evt === "d2d_service_message" && msg.params && msg.params.data) {
+      try {
+        var inner = JSON.parse(msg.params.data);
+        if (inner && inner.event) evt = inner.event;
+        msg = inner || msg;
+      } catch (e) {}
+    }
+
+    if (evt === "ms.channel.unauthorized") {
+      state.unauthorized = true;
+      setStatus("pairing", "waiting for Allow…");
+      showPair(true);
+      log("rx", "unauthorized — accept the prompt on the TV");
+      return;
+    }
+
+    if (evt === "ms.channel.connect") {
+      onConnected(msg);
+      return;
+    }
+
+    if (evt === "ms.channel.ready") {
+      log("rx", "channel ready");
+      requestApps();
+      return;
+    }
+
+    if (evt === "ms.channel.timeOut") {
+      log("er", "TV timed out the pairing prompt");
+      toast("TV timed out the pairing prompt", true);
+      return;
+    }
+
+    if (evt === "ed.installedApp.get") {
+      parseApps(msg);
+      return;
+    }
+
+    if (evt === "ms.error") {
+      var err = msg.error || (msg.params && msg.params.error) || {};
+      log("er", "TV error: " + JSON.stringify(err));
+      toast("TV error: " + (err.message || err.code || "unknown"), true);
+      return;
+    }
+
+    if (evt) log("rx", "event " + evt);
+  }
+
+  function onConnected(msg) {
+    var data = msg.data || (msg.params && msg.params.data) || {};
+    var token = data.token || "";
+    if (token) {
+      CFG.token = token;
+      LS.set("tv.token", token);
+    }
+    state.connected = true;
+    state.paired = true;
+    state.unauthorized = false;
+    state.attempts = 0;
+    setStatus("online", CFG.host + " · online");
+    showPair(false);
+    updateOnline();
+    log("rx", "connected" + (token ? " (token saved)" : ""));
+    toast("Connected to " + CFG.host);
+    keepAwake();
+    requestApps();
+    clearTimeout(state.appListTimer);
+    state.appListTimer = setTimeout(function () {
+      if (state.connected && state.apps.length === 0) requestApps();
+    }, 2500);
+  }
+
+  function disconnect() {
+    state.want = false;
+    clearTimeout(state.reconnectTimer);
+    if (isBackend()) {
+      state.connected = false;
+      state.paired = false;
+      setStatus("", "offline");
+      updateOnline();
+      return;
+    }
+    if (state.ws) {
+      try { state.ws.onclose = null; state.ws.close(); } catch (e) {}
+    }
+    state.ws = null;
+    state.connected = false;
+    state.paired = false;
+    setStatus("", "offline");
+    updateOnline();
+  }
+
+  /* ============================================================
+     Send primitives
+     ============================================================ */
+  function send(obj, quiet) {
+    if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
+      if (!quiet) toast("Not connected to the TV", true);
+      return false;
+    }
+    var raw = JSON.stringify(obj);
+    try {
+      state.ws.send(raw);
+      var shown = raw;
+      if (obj && obj.params && obj.params.TypeOfRemote === "SendInputString") {
+        shown = '{"method":"ms.remote.control","params":{"TypeOfRemote":"SendInputString","Cmd":"<base64 ' +
+          String(obj.params.Cmd || "").length + ' chars>"}}';
+      }
+      log("tx", shown.length > 400 ? shown.slice(0, 400) + "…" : shown);
+      return true;
+    } catch (e) {
+      log("er", "send failed: " + e.message);
+      return false;
+    }
+  }
+
+  var backendErrorAt = 0;
+  function backendGet(path) {
+    return fetch(backendBase() + path, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+  function backendPost(path, obj) {
+    return fetch(backendBase() + path, {
+      method: "POST",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(obj || {})
+    }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).catch(function (e) {
+      var now = Date.now();
+      if (now - backendErrorAt > 4000) {
+        backendErrorAt = now;
+        log("er", "backend " + path + ": " + e.message);
+      }
+      throw e;
+    });
+  }
+
+  function sendKeyNow(key, cmd) {
+    if (isBackend()) {
+      if (key === "KEY_VOLUP" || key === "KEY_VOLUMEUP") {
+        backendPost("/api/volume", { delta: 5 }).catch(function () {});
+        return true;
+      }
+      if (key === "KEY_VOLDOWN" || key === "KEY_VOLUMEDOWN") {
+        backendPost("/api/volume", { delta: -5 }).catch(function () {});
+        return true;
+      }
+      if (key === "KEY_MUTE") {
+        backendPost("/api/mute", {}).catch(function () {});
+        return true;
+      }
+      var action = cmd === "Press" ? "press" : cmd === "Release" ? "release" : "click";
+      backendPost("/api/key", { key: key, action: action }).catch(function () {});
+      return true;
+    }
+    return send({
+      method: "ms.remote.control",
+      params: {
+        Cmd: cmd || "Click",
+        DataOfCmd: key,
+        Option: "false",
+        TypeOfRemote: "SendRemoteKey"
+      }
+    }, true);
+  }
+
+  function key(key, cmd) {
+    if (!state.connected) { toast("Not connected to the TV", true); return; }
+    if (state.keyQueue.length > 24) state.keyQueue.shift();
+    state.keyQueue.push({ key: key, cmd: cmd || "Click" });
+    pumpKeys();
+  }
+
+  function pumpKeys() {
+    if (state.keyTimer) return;
+    var step = function () {
+      if (!state.keyQueue.length) { state.keyTimer = null; return; }
+      var item = state.keyQueue.shift();
+      sendKeyNow(item.key, item.cmd);
+      state.keyTimer = setTimeout(step, state.keyGap);
+    };
+    state.keyTimer = setTimeout(step, 0);
+  }
+
+  function sendText(text) {
+    if (!text) return;
+    if (isBackend()) {
+      backendPost("/api/text", { text: text }).catch(function () {
+        toast("Text send failed", true);
+      });
+      return;
+    }
+    var b64 = toB64(text);
+    send({
+      method: "ms.remote.control",
+      params: { Cmd: b64, DataOfCmd: "base64", TypeOfRemote: "SendInputString" }
+    });
+    setTimeout(function () {
+      send({ method: "ms.remote.control", params: { TypeOfRemote: "SendInputEnd" } }, true);
+    }, 120);
+  }
+
+  /* ============================================================
+     Apps
+     ============================================================ */
+  function requestApps() {
+    if (isBackend()) {
+      backendGet("/api/apps").then(function (d) {
+        var list = (d && d.apps) || [];
+        state.apps = list.map(function (a) {
+          return { id: a.id || a.appId || "", name: a.name || a.id || "Unknown", type: a.type };
+        }).filter(function (a) { return !!a.id; });
+        log("", "backend apps: " + state.apps.length);
+        renderApps();
+        updateQuickSubtitles();
+      }).catch(function (e) {
+        log("er", "apps fetch failed: " + e.message);
+        renderApps();
+      });
+      return;
+    }
+    if (!state.connected) return;
+    send({
+      method: "ms.channel.emit",
+      params: { event: "ed.installedApp.get", to: "host", data: "" }
+    }, true);
+    log("", "requested installed app list");
+  }
+
+  function parseApps(msg) {
+    var d = msg.data || (msg.params && msg.params.data) || {};
+    var arr = d.data || d.apps || null;
+    if (!Array.isArray(arr)) {
+      // Some builds nest it in params.data.data
+      if (msg.params && msg.params.data && Array.isArray(msg.params.data.data)) arr = msg.params.data.data;
+    }
+    if (!Array.isArray(arr)) { log("er", "app list shape not recognised"); return; }
+
+    var seen = {};
+    state.apps = arr.map(function (a) {
+      return {
+        id: a.appId || a.app_id || a.id || "",
+        name: a.name || a.app_name || a.appName || a.appId || "Unknown",
+        type: (a.app_type != null ? a.app_type : (a.appType != null ? a.appType : a.type))
+      };
+    }).filter(function (a) {
+      if (!a.id || seen[a.id]) return false;
+      seen[a.id] = 1;
+      return true;
+    }).sort(function (a, b) {
+      return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+    });
+
+    log("", "app list: " + state.apps.length + " apps");
+    renderApps();
+    updateQuickSubtitles();
+  }
+
+  function findApp(re) {
+    var i, a;
+    for (i = 0; i < state.apps.length; i++) {
+      a = state.apps[i];
+      if (re.test(a.name) || re.test(a.id)) return a;
+    }
+    return null;
+  }
+
+  function actionFor(app, fallback) {
+    if (app && app.type != null) return Number(app.type) === 2 ? "DEEP_LINK" : "NATIVE_LAUNCH";
+    return fallback || "NATIVE_LAUNCH";
+  }
+
+  function resolved(kind) {
+    if (kind === "youtube") {
+      var yt = findApp(/youtube/i);
+      if (yt) return { id: yt.id, action: actionFor(yt), name: yt.name };
+      return { id: APP_IDS.youtube[0].id, action: APP_IDS.youtube[0].action, name: "YouTube" };
+    }
+    var jf = findApp(/jellyfin/i);
+    if (jf) return { id: jf.id, action: actionFor(jf), name: jf.name };
+    return { id: APP_IDS.jellyfin[0].id, action: APP_IDS.jellyfin[0].action, name: "Jellyfin" };
+  }
+
+  function launchApp(appId, action, meta) {
+    if (isBackend()) {
+      backendPost("/api/launch", { appId: appId }).then(function () {
+        toast("Launching…");
+      }).catch(function () {
+        toast("Launch failed", true);
+      });
+      return;
+    }
+    if (!state.connected) { toast("Not connected to the TV", true); return; }
+    var data = { appId: appId, action_type: action || "NATIVE_LAUNCH" };
+    if (meta) data.metaTag = meta;
+    send({
+      method: "ms.channel.emit",
+      params: { event: "ed.apps.launch", to: "host", data: data }
+    });
+    toast("Launching…");
+  }
+
+  function updateQuickSubtitles() {
+    var yt = resolved("youtube");
+    var jf = resolved("jellyfin");
+    var ytFound = !!findApp(/youtube/i);
+    var jfFound = !!findApp(/jellyfin/i);
+    $("ytSub").textContent = yt.id;
+    $("jfSub").textContent = jf.id;
+    if (isBackend()) {
+      $("ytBadge").textContent = "backend";
+      $("jfBadge").textContent = "backend";
+      $("homeBadge").textContent = "backend";
+    } else {
+      $("ytBadge").textContent = ytFound ? "installed" : "fallback";
+      $("jfBadge").textContent = jfFound ? "installed" : "fallback";
+      $("homeBadge").textContent = "klyq";
+    }
+  }
+
+  function renderApps() {
+    var grid = $("appGrid");
+    var q = ($("appSearch").value || "").trim().toLowerCase();
+    var list = state.apps.filter(function (a) {
+      return !q || a.name.toLowerCase().indexOf(q) >= 0 || a.id.toLowerCase().indexOf(q) >= 0;
+    }).slice(0, 80);
+
+    if (!list.length) {
+      grid.innerHTML = '<div class="hint">' + (state.apps.length ? "No matches." : (state.connected ? "No app list received yet. Tap Refresh." : "Connect to load the TV's app list.")) + "</div>";
+      return;
+    }
+
+    grid.innerHTML = "";
+    list.forEach(function (a) {
+      var b = document.createElement("button");
+      b.className = "appSmall";
+      b.type = "button";
+      b.innerHTML = "<b>" + esc(a.name) + "</b><span>" + esc(a.id) + "</span>";
+      b.addEventListener("click", function () {
+        launchApp(a.id, actionFor(a, "NATIVE_LAUNCH"));
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  /* ============================================================
+     Keyboard
+     ============================================================ */
+  function isTypingTarget(el) {
+    if (!el) return false;
+    var t = (el.tagName || "").toLowerCase();
+    return t === "input" || t === "textarea" || t === "select" || el.isContentEditable;
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey && e.shiftKey && (e.key === "K" || e.key === "k")) {
+      e.preventDefault();
+      setKeyboard(!state.keyboard);
+      return;
+    }
+    if (!state.keyboard) return;
+    if (isTypingTarget(document.activeElement)) return;
+    if (document.querySelector(".scrim.show")) return;
+    if (e.key === "Escape" && document.pointerLockElement) return; // browser releases capture
+
+    // Printable keys behave like a hardware keyboard: type the character into
+    // the focused TV field. Navigation keys still go through the remote path.
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      sendText(e.key);
+      return;
+    }
+
+    var k = KEYMAP[e.key];
+    if (k) {
+      e.preventDefault();
+      key(k);
+      return;
+    }
+    if (e.key === "MediaPlayPause") { e.preventDefault(); key("KEY_PLAY"); }
+    else if (e.key === "MediaTrackNext") { e.preventDefault(); key("KEY_CHUP"); }
+    else if (e.key === "MediaTrackPrevious") { e.preventDefault(); key("KEY_CHDOWN"); }
+  });
+
+  function setKeyboard(on) {
+    state.keyboard = !!on;
+    $("btnKeyboard").classList.toggle("on", state.keyboard);
+    $("btnKeyboard").setAttribute("aria-pressed", state.keyboard ? "true" : "false");
+    if (state.keyboard) toast("Keyboard capture on — Ctrl+Shift+K to release");
+  }
+
+  function setTextMode(on) {
+    state.textMode = !!on;
+    $("btnTextMode").classList.toggle("on", state.textMode);
+    $("btnTextMode").setAttribute("aria-pressed", state.textMode ? "true" : "false");
+    if (state.textMode) openText();
+    else closeScrim("textScrim");
+  }
+
+  /* ============================================================
+     UI bindings
+     ============================================================ */
+  // Key buttons (single click)
+  Array.prototype.forEach.call(document.querySelectorAll("[data-key]"), function (btn) {
+    var k = btn.getAttribute("data-key");
+    if (btn.getAttribute("data-repeat") === "1") {
+      var t1 = null, t2 = null, held = false;
+      var stop = function () {
+        clearTimeout(t1); clearInterval(t2);
+        t1 = t2 = null;
+        if (held) { held = false; }
+      };
+      btn.addEventListener("pointerdown", function (e) {
+        e.preventDefault();
+        if (t1) return;
+        key(k);
+        t1 = setTimeout(function () {
+          held = true;
+          t2 = setInterval(function () { key(k); }, 160);
+        }, 420);
+      });
+      btn.addEventListener("pointerup", stop);
+      btn.addEventListener("pointercancel", stop);
+      btn.addEventListener("pointerleave", stop);
+      btn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    } else {
+      btn.addEventListener("click", function () { key(k); });
+    }
+  });
+
+  // Power: hold for 1s
+  (function () {
+    var btn = $("btnPower"), fill = btn.querySelector(".fill");
+    var t = null, raf = null, start = 0;
+    var cancel = function () {
+      clearTimeout(t); cancelAnimationFrame(raf);
+      fill.style.height = "0%";
+      start = 0;
+    };
+    btn.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      start = performance.now();
+      var tick = function () {
+        var p = clamp((performance.now() - start) / 1000, 0, 1);
+        fill.style.height = (p * 100) + "%";
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+      t = setTimeout(function () {
+        cancel();
+        key("KEY_POWER");
+        toast("Power key sent");
+      }, 1000);
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) {
+      btn.addEventListener(ev, cancel);
+    });
+  })();
+
+  // Quick app tiles
+  $("tileYouTube").addEventListener("click", function () {
+    var a = resolved("youtube");
+    launchApp(a.id, a.action);
+  });
+  $("tileJellyfin").addEventListener("click", function () {
+    var a = resolved("jellyfin");
+    launchApp(a.id, a.action);
+  });
+  $("tileHome").addEventListener("click", function () {
+    launchApp("9TYrsHWbaB.klyq", "NATIVE_LAUNCH");
+  });
+
+  $("btnRefreshApps").addEventListener("click", function () {
+    if (!state.connected) { toast("Not connected to the TV", true); return; }
+    requestApps();
+    toast("Requested app list");
+  });
+
+  $("appSearch").addEventListener("input", renderApps);
+
+  $("btnOpenUrl").addEventListener("click", function () {
+    var u = ($("urlInput").value || "").trim();
+    if (!u) { $("urlInput").focus(); return; }
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    launchApp("org.tizen.browser", "NATIVE_LAUNCH", u);
+  });
+  $("urlInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") $("btnOpenUrl").click();
+  });
+
+  // Toggles
+  $("btnKeyboard").addEventListener("click", function () { setKeyboard(!state.keyboard); });
+  $("btnTextMode").addEventListener("click", function () { setTextMode(!state.textMode); });
+
+  // Connection pill: connect if offline, settings if online
+  $("connPill").addEventListener("click", function () {
+    if (state.connected) openSettings();
+    else connect(true);
+  });
+
+  /* ============================================================
+     Modals
+     ============================================================ */
+  function openScrim(id) { $(id).classList.add("show"); }
+  function closeScrim(id) { $(id).classList.remove("show"); }
+
+  function openSettings() {
+    $("inHost").value = CFG.host;
+    $("inPort").value = CFG.port;
+    $("inName").value = CFG.name;
+    $("inMode").value = CFG.mode;
+    $("inBackend").value = CFG.backend || ("http://" + CFG.host + ":8099");
+    $("inToken").value = CFG.token;
+    updateOnline();
+    openScrim("settingsScrim");
+  }
+
+  $("btnSettings").addEventListener("click", openSettings);
+  $("btnCloseSettings").addEventListener("click", function () { closeScrim("settingsScrim"); });
+  $("settingsScrim").addEventListener("click", function (e) {
+    if (e.target === $("settingsScrim")) closeScrim("settingsScrim");
+  });
+
+  $("btnSaveSettings").addEventListener("click", function () {
+    var hp = splitHostPort($("inHost").value);
+    var host = hp.host;
+    var port = parseInt($("inPort").value, 10) || hp.port;
+    if (!host) { toast("Enter the TV hostname or IP", true); return; }
+    if (!port || port < 1 || port > 65535) { toast("Invalid port", true); return; }
+    CFG.host = host;
+    CFG.port = port;
+    CFG.name = ($("inName").value || "nebtv-web").trim() || "nebtv-web";
+    ensureDeviceName();
+    CFG.mode = $("inMode").value;
+    CFG.backend = ($("inBackend").value || "").trim().replace(/\/+$/, "");
+    if (!CFG.backend) CFG.backend = "http://" + CFG.host + ":8099";
+    LS.set("tv.mode", CFG.mode);
+    LS.set("tv.backend", CFG.backend);
+    var pasted = ($("inToken").value || "").trim();
+    CFG.token = pasted;
+    if (pasted) LS.set("tv.token", pasted);
+    else LS.del("tv.token");
+    LS.set("tv.host", CFG.host);
+    LS.set("tv.port", String(CFG.port));
+    LS.set("tv.name", CFG.name);
+    closeScrim("settingsScrim");
+    toast("Settings saved");
+    disconnect();
+    connect(true);
+  });
+
+  $("btnReconnect").addEventListener("click", function () {
+    closeScrim("settingsScrim");
+    disconnect();
+    connect(true);
+  });
+
+  $("btnForget").addEventListener("click", forgetToken);
+  $("btnPairForget").addEventListener("click", forgetToken);
+
+  function forgetToken() {
+    CFG.token = "";
+    LS.del("tv.token");
+    updateOnline();
+    state.attempts = 0;
+    state.unauthorized = false;
+    closeScrim("settingsScrim");
+    showPair(true);
+    disconnect();
+    connect(true);
+    toast("Token forgotten — accept the new TV prompt");
+  }
+
+  $("btnPairRetry").addEventListener("click", function () {
+    state.attempts = 0;
+    if (state.ws && state.ws.readyState === WebSocket.OPEN) {
+      // Ask the TV again by reconnecting (some sets only re-prompt on a new socket).
+    }
+    disconnect();
+    connect(true);
+  });
+
+  $("btnPairClose").addEventListener("click", function () {
+    disconnect();
+    showPair(false);
+    setStatus("", "offline");
+  });
+
+  $("btnConnect").addEventListener("click", function () {
+    connect(true);
+  });
+
+  $("btnHelp").addEventListener("click", function () { openScrim("helpScrim"); });
+  $("btnCloseHelp").addEventListener("click", function () { closeScrim("helpScrim"); });
+  $("helpScrim").addEventListener("click", function (e) {
+    if (e.target === $("helpScrim")) closeScrim("helpScrim");
+  });
+
+  // Text modal
+  function openText() {
+    openScrim("textScrim");
+    setTimeout(function () { $("textInput").focus(); }, 80);
+  }
+  $("btnCloseText").addEventListener("click", function () {
+    closeScrim("textScrim");
+    setTextMode(false);
+  });
+  $("textScrim").addEventListener("click", function (e) {
+    if (e.target === $("textScrim")) { closeScrim("textScrim"); setTextMode(false); }
+  });
+  $("btnSendText").addEventListener("click", function () {
+    var v = $("textInput").value;
+    if (!v) { $("textInput").focus(); return; }
+    sendText(v);
+    $("textInput").value = "";
+    toast("Text sent");
+  });
+  $("textInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); $("btnSendText").click(); }
+  });
+
+  // Log
+  $("btnShowLog").addEventListener("click", function () {
+    var el = $("logList");
+    el.hidden = !el.hidden;
+    $("btnShowLog").textContent = el.hidden ? "Show log" : "Hide log";
+  });
+  $("btnClearLog").addEventListener("click", function () {
+    $("logList").innerHTML = ""; logCount = 0;
+  });
+
+  // Global Esc closes modals
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if ($("textScrim").classList.contains("show")) setTextMode(false);
+    ["settingsScrim", "helpScrim"].forEach(function (id) {
+      if ($(id).classList.contains("show")) closeScrim(id);
+    });
+  });
+
+  // Reconnect when returning to the tab
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      releaseWake();
+      return;
+    }
+    if (state.connected) keepAwake();
+    if (state.want && !state.connected) {
+      clearTimeout(state.reconnectTimer);
+      connect(false);
+    }
+  });
+
+  /* ============================================================
+     Boot
+     ============================================================ */
+  (function boot() {
+    // Optional one-shot overrides, useful for testing or a second TV:
+    // index.html?host=192.168.86.191&port=8001&autoconnect=1
+    try {
+      var qp = new URLSearchParams(location.search);
+      if (qp.get("host")) {
+        var hp = splitHostPort(qp.get("host"));
+        if (hp.host) CFG.host = hp.host;
+        if (hp.port) CFG.port = hp.port;
+      }
+      if (qp.get("port")) CFG.port = parseInt(qp.get("port"), 10) || CFG.port;
+      if (qp.get("name")) CFG.name = qp.get("name");
+      var auto = qp.get("autoconnect") === "1";
+    } catch (e) { var auto = false; }
+
+    updateOnline();
+    setKeyboard(false);
+    setTextMode(false);
+    closeScrim("textScrim");
+
+    if (location.protocol === "https:" && CFG.port === 8001) {
+      var b = $("banner");
+      b.className = "show";
+      b.innerHTML = "This page is served over HTTPS, so browsers will block <code>ws://</code> to the TV. Serve this file over plain HTTP on your LAN, or use a TLS port with a trusted certificate.";
+    }
+
+    renderApps();
+    updateQuickSubtitles();
+    log("", "client ready · target " + CFG.host + ":" + CFG.port);
+
+    // Kept intentionally: lets the console (and automated checks) inspect the
+    // connection state without exposing any TV credential.
+    window.__tvDebug = {
+      state: state,
+      cfg: CFG,
+      connect: connect,
+      disconnect: disconnect,
+      launch: launchApp,
+      key: key
+    };
+
+    // Auto-connect when using the backend, a token exists, or explicitly requested.
+    if (isBackend() || CFG.token || auto) {
+      setTimeout(function () { connect(false); }, 250);
+    } else {
+      setStatus("", "offline");
+      showPair(false);
+      setTimeout(function () {
+        if (!state.connected && !state.want) toast("Press Connect or tap the status pill to pair");
+      }, 600);
+    }
+  })();
+})();
+</script>
+</body>
+</html>
